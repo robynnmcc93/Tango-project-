@@ -5,6 +5,7 @@ Add a Page
 {% endblock %}
 
 {% block body_block %}
+
         <form id="page_form" method="post" action="/rango/category/{{ category.slug }}/add_page/">
             {% csrf_token %}
             {% for hidden in form.hidden_fields %}
