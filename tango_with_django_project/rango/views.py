@@ -1,20 +1,15 @@
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from rango.models import Category, Page
-from rango.forms import CategoryForm, PageForm
-from django.shortcuts import redirect
+from rango.forms import CategoryForm, PageForm, UserForm, UserProfileForm
 from django.urls import reverse
-from rango.forms import UserForm, UserProfileForm
-from django.contrib.auth import authenticate, login
-from django.http import HttpResponse
-from django.urls import reverse
-from django.shortcuts import redirect
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout
 from datetime import datetime
 
 
 def index(request):
+
     category_list = Category.objects.order_by('-likes')[:5]
     page_list = Page.objects.order_by('-views')[:5]
     context_dict = {}
@@ -32,11 +27,11 @@ def index(request):
 
 def about(request):
 
-    visitor_cookie_handler()
+    visitor_cookie_handler(request)
+    context_dict = {'visits': request.session['visits']}
+    response = render(request, 'rango/about.html', context=context_dict)
 
-    context_dict = {'visits': request.sessions['visits']}
-
-    return render(request, 'rango/about.html', context=context_dict)
+    return response
 
 
 def show_category(request, category_name_slug):
@@ -133,7 +128,6 @@ def register(request):
         user_form = UserForm()
         profile_form = UserProfileForm()
 
-
     return render(request,
                 'rango/register.html',
                 context = {'user_form': user_form,
@@ -180,6 +174,7 @@ def get_server_side_cookie(request, cookie, default_val=None):
 
 
 def visitor_cookie_handler(request):
+
     visits = int(request.COOKIES.get('visits', '1'))
     last_visit_cookie = request.COOKIES.get('last_visit', str(datetime.now()))
     last_visit_time = datetime.strptime(last_visit_cookie[:-7],
